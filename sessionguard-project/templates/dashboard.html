@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SessionGuard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header>
+        <h1><i class="fab fa-google"></i> SessionGuard</h1>
+        <p>View and manage where your Google account is logged in</p>
+    </header>
+    
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="card profile">
+                <div class="profile-img">
+                    <img src="{{ user.picture }}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%;" onerror="this.style.display='none'">
+                    <i class="fas fa-user" style="display: none;"></i>
+                </div>
+                <h2>{{ user.name }}</h2>
+                <p>{{ user.email }}</p>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-number">{{ sessions|length }}</div>
+                        <div class="stat-label">Sessions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">{{ active_sessions }}</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <a href="{{ url_for('refresh_sessions') }}" class="action-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh Sessions
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="action-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2><i class="fas fa-laptop"></i> Active Sessions</h2>
+                <p>These are the devices that are currently logged in to your Google account.</p>
+                
+                <div style="background: #e8f0fe; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <p><strong>Note:</strong> This shows simulated session data. Real Google session management requires additional API permissions and verification.</p>
+                </div>
+                
+                <div class="session-list">
+                    {% for s in sessions %}
+                    <div class="session-item {% if s.current %}current-session{% endif %}">
+                        <div class="device-icon">
+                            {% if 'Windows' in s.os %}
+                            <i class="fab fa-windows"></i>
+                            {% elif 'Mac' in s.os %}
+                            <i class="fab fa-apple"></i>
+                            {% elif 'iPhone' in s.name or 'iOS' in s.os %}
+                            <i class="fas fa-mobile-alt"></i>
+                            {% elif 'Android' in s.os %}
+                            <i class="fab fa-android"></i>
+                            {% elif 'Linux' in s.os %}
+                            <i class="fab fa-linux"></i>
+                            {% else %}
+                            <i class="fas fa-desktop"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="session-info">
+                            <h3>{{ s.device }} 
+                                <span class="status-badge status-{{ s.status }}">
+                                    {{ s.status|title }}
+                                </span>
+                                {% if s.current %}
+                                <span class="status-badge status-active">Current</span>
+                                {% endif %}
+                            </h3>
+                            <p>{{ s.os }} • {{ s.browser }}</p>
+                        </div>
+                        
+                        <div class="session-details">
+                            <p><i class="fas fa-globe"></i> {{ s.location }}</p>
+                            <p><i class="fas fa-clock"></i> {{ s.login_time }}</p>
+                            <p><i class="fas fa-network-wired"></i> {{ s.ip_address }}</p>
+                        </div>
+                        
+                        <div class="session-actions">
+                            {% if not s.current and s.status == 'active' %}
+                            <button onclick="logoutSession('{{ s.id }}')">
+                                <i class="fas fa-sign-out-alt"></i> Log out
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function logoutSession(sessionId) {
+    fetch('/logout_session/' + sessionId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Session logged out successfully');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while logging out the session');
+    });
+}
+</script>
+{% endblock %}
+<!-- Add this card to the main-content section -->
+<div class="card">
+    <h2><i class="fas fa-plug"></i> Connected Apps & Games</h2>
+    <p>Manage applications and games that have access to your Google account.</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 2rem; font-weight: bold; color: #1a73e8;">{{ total_apps }}</div>
+            <div style="color: #5f6368;">Total Apps</div>
+        </div>
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 2rem; font-weight: bold; color: #34A853;">{{ active_apps }}</div>
+            <div style="color: #5f6368;">Active</div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ url_for('apps_management') }}" class="action-btn" style="display: inline-block; width: auto; padding: 10px 20px;">
+            <i class="fas fa-cog"></i> Manage Apps & Games
+        </a>
+    </div>
+</div>

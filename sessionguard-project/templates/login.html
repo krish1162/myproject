@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Login - SessionGuard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="login-container">
+        <div class="login-header">
+            <h1><i class="fab fa-google"></i> SessionGuard</h1>
+            <p>Sign in with your Google account to manage sessions</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ url_for('google_login') }}" class="btn" style="background: #4285f4; display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px;">
+                <i class="fab fa-google" style="margin-right: 10px; font-size: 18px;"></i>
+                Sign in with Google
+            </a>
+        </div>
+
+        <div class="demo-credentials">
+            <p><strong>Note:</strong></p>
+            <p>This application uses real Google OAuth 2.0 authentication.</p>
+            <p>You'll be redirected to Google to sign in with your actual Gmail account.</p>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #e8f0fe; border-radius: 5px;">
+            <p><strong>Setup Required:</strong></p>
+            <p>To use this with real Gmail accounts, you need to:</p>
+            <ol style="text-align: left; margin: 10px 0;">
+                <li>Create a project in Google Cloud Console</li>
+                <li>Enable Gmail API and Google+ API</li>
+                <li>Configure OAuth 2.0 credentials</li>
+                <li>Set environment variables for client ID and secret</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}

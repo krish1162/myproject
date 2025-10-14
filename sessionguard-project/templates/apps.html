@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Connected Apps - SessionGuard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header>
+        <h1><i class="fab fa-google"></i> SessionGuard</h1>
+        <p>Manage apps and games connected to your Google account</p>
+    </header>
+    
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="card profile">
+                <div class="profile-img">
+                    <img src="{{ user.picture }}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%;" onerror="this.style.display='none'">
+                    <i class="fas fa-user" style="display: none;"></i>
+                </div>
+                <h2>{{ user.name }}</h2>
+                <p>{{ user.email }}</p>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-number">{{ total_apps }}</div>
+                        <div class="stat-label">Total Apps</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">{{ active_apps }}</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <a href="{{ url_for('dashboard') }}" class="action-btn">
+                        <i class="fas fa-laptop"></i> Device Sessions
+                    </a>
+                    <a href="{{ url_for('refresh_apps') }}" class="action-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh Apps
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="action-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- Apps Section -->
+            <div class="card">
+                <h2><i class="fas fa-mobile-alt"></i> Connected Applications</h2>
+                <p>These are the applications that have access to your Google account.</p>
+                
+                <div class="session-list">
+                    {% for app in apps %}
+                    {% if app.category != 'Gaming' %}
+                    <div class="app-item {% if app.status == 'inactive' %}app-inactive{% endif %}">
+                        <div class="app-icon" style="background: {{ app.color }};">
+                            <i class="{{ app.icon }}"></i>
+                        </div>
+                        
+                        <div class="app-info">
+                            <h3>{{ app.name }}
+                                <span class="status-badge status-{{ app.status }}">
+                                    {{ app.status|title }}
+                                </span>
+                                <span class="category-badge">{{ app.category }}</span>
+                            </h3>
+                            <div class="app-details">
+                                <p><strong>Permissions:</strong> {{ app.permissions|join(', ') }}</p>
+                                <p><strong>First login:</strong> {{ app.login_date }}</p>
+                                <p><strong>Last used:</strong> {{ app.last_used }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="app-actions">
+                            {% if app.status == 'active' %}
+                            <button onclick="removeApp('{{ app.id }}')" class="btn-remove">
+                                <i class="fas fa-unlink"></i> Remove Access
+                            </button>
+                            {% else %}
+                            <span class="text-muted">Access Removed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Games Section -->
+            <div class="card">
+                <h2><i class="fas fa-gamepad"></i> Connected Games</h2>
+                <p>These are the games that have access to your Google account.</p>
+                
+                <div class="session-list">
+                    {% for app in apps %}
+                    {% if app.category == 'Gaming' %}
+                    <div class="app-item {% if app.status == 'inactive' %}app-inactive{% endif %}">
+                        <div class="app-icon" style="background: {{ app.color }};">
+                            <i class="{{ app.icon }}"></i>
+                        </div>
+                        
+                        <div class="app-info">
+                            <h3>{{ app.name }}
+                                <span class="status-badge status-{{ app.status }}">
+                                    {{ app.status|title }}
+                                </span>
+                                <span class="category-badge">{{ app.category }}</span>
+                            </h3>
+                            <div class="app-details">
+                                <p><strong>Permissions:</strong> {{ app.permissions|join(', ') }}</p>
+                                <p><strong>First login:</strong> {{ app.login_date }}</p>
+                                <p><strong>Last used:</strong> {{ app.last_used }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="app-actions">
+                            {% if app.status == 'active' %}
+                            <button onclick="removeApp('{{ app.id }}')" class="btn-remove">
+                                <i class="fas fa-unlink"></i> Remove Access
+                            </button>
+                            {% else %}
+                            <span class="text-muted">Access Removed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Security Tips -->
+            <div class="card" style="background: #f8f9fa; border-left: 4px solid #1a73e8;">
+                <h3><i class="fas fa-shield-alt"></i> Security Tips</h3>
+                <ul style="text-align: left; margin: 15px 0; padding-left: 20px;">
+                    <li>Regularly review which apps have access to your account</li>
+                    <li>Remove access for apps you no longer use</li>
+                    <li>Be cautious of apps requesting unnecessary permissions</li>
+                    <li>Use strong, unique passwords for each service</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function removeApp(appId) {
+    if (confirm('Are you sure you want to remove access for this app? This will revoke its permissions.')) {
+        fetch('/remove_app/' + appId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('App access removed successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while removing app access');
+        });
+    }
+}
+</script>
+{% endblock %}
